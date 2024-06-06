@@ -23,6 +23,6 @@ def setup_parser(subparser):
     )
 
     
-def subspack(parser, args):
+def installdir(parser, args):
     #print("parser is " + repr(parser) + "args: " + repr(args))
     sext.install_directory(args)

@@ -57,7 +57,7 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
         print("unlinking")
         os.unlink( "%s/packages/%s/package.py" % (rd, name))
 
-    f = os.popen("unset VISUAL; EDITOR=/bin/ed spack create -N %s --template generic --name %s" % (namespace, name), "w")
+    f = os.popen("unset VISUAL; EDITOR=/bin/ed spack create -N %s --template generic --name %s > /dev/null 2>&1" % (namespace, name), "w")
     dict = {
        'name': name, 
        'NAME': name.upper().replace('-','_'), 
@@ -96,15 +96,13 @@ wq
 def make_tarfile(directory, name,version):
     if directory:
        directory = f"cd {directory} &&"
-    else
+    else:
        directory = ""
     tfn = "/tmp/%s.v%s.tgz" % (name, version)
     os.system(f"{directory} tar czvf %s ." % tfn)
     return tfn
 
-def install_diretory(args):
-    
-    namespace = "local"
+def install_directory(args):
     name, version = args.spec.replace("=","").split("@")
     tfn = make_tarfile(args.directory,name,version)
     make_recipe(args.namespace, name, version, tfn,  'PATH')

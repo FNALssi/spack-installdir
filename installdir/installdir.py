@@ -54,8 +54,11 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
 
     print( "pfile: %s/packages/%s/package.py" % (rd, name))
     if os.path.exists( "%s/packages/%s/package.py" % (rd, name)):
-        print("unlinking")
-        os.unlink( "%s/packages/%s/package.py" % (rd, name))
+        print("saving recipe")
+        os.rename( 
+             "%s/packages/%s/package.py" % (rd, name),
+             "%s/packages/%s/package.py.save" % (rd, name),
+        )
 
     f = os.popen("unset VISUAL; EDITOR=/bin/ed spack create -N %s --template generic --name %s > /dev/null 2>&1" % (namespace, name), "w")
     dict = {
@@ -102,8 +105,24 @@ def make_tarfile(directory, name,version):
     os.system(f"{directory} tar czvf %s ." % tfn)
     return tfn
 
+    
+def restore_recipe( namespace, name ):
+
+    rd = make_repo_if_needed(namespace)
+
+    # restore recipe if present with new tarfile...
+
+    print( "pfile: %s/packages/%s/package.py" % (rd, name))
+    if os.path.exists( "%s/packages/%s/package.py.save" % (rd, name)):
+        print("restoring recipe")
+        os.rename( 
+             "%s/packages/%s/package.py.save" % (rd, name),
+             "%s/packages/%s/package.py" % (rd, name),
+        )
+
 def install_directory(args):
     name, version = args.spec.replace("=","").split("@")
     tfn = make_tarfile(args.directory,name,version)
     make_recipe(args.namespace, name, version, tfn,  'PATH')
     os.system("spack install --no-checksum %s@%s" % (name, version))
+    restore_recipe(args.namespace, name)

@@ -15,10 +15,12 @@ In most cases you can just do:
   spack installdir package@version
 
 to add the current directory tree as a version of the package.
-* --directory /path/to/directory  specify a directory other then the current directory
-* --namespace name specify the namespace to create the recipe in. 
 
-You can also edit the recipe with spack edit and add a "setup_run_environment()" method if you need the package to set environment variables, etc.
+You can also specify options:
+* --directory /path/to/directory  specify a directory other then the current directory
+* --namespace name specify the namespace to create the recipe in (it defaults to "local")
+
+After running spack installdir, you can edit the recipe with spack edit and add a "setup_run_environment()" method if you need the package to set environment variables, etc.
 
 ### Installation
 

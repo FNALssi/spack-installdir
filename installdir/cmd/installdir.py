@@ -3,7 +3,7 @@ import spack.config
 from spack.extensions import installdir as sext
 
 description = "package up a directory as a spack package"
-section = "basic"
+section = "packaging"
 level = "short"
 
 

@@ -2,6 +2,10 @@ import sys
 import spack.config
 from spack.extensions import installdir as idir
 
+description = "package up a directory as a spack package"
+section = "packaging"
+level = "short"
+
 
 def setup_parser(subparser):
 

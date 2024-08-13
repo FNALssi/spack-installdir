@@ -24,7 +24,7 @@ def get_tuple():
 
 
 def run_command(s):
-    print("--> running: %s" % s)
+    tty.debug("--> running: %s" % s)
     os.system(s)
 
 
@@ -66,9 +66,9 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
 
     # rewrite recipe if present with new tarfile...
 
-    print( "pfile: %s/packages/%s/package.py" % (rd, name))
+    tty.debug( "recipe: %s/packages/%s/package.py" % (rd, name))
     if os.path.exists( "%s/packages/%s/package.py" % (rd, name)):
-        print("saving recipe")
+        tty.info("saving recipe")
         os.rename( 
              "%s/packages/%s/package.py" % (rd, name),
              "%s/packages/%s/package.py.save" % (rd, name),
@@ -124,9 +124,9 @@ def restore_recipe( namespace, name ):
 
     # restore recipe if present with new tarfile...
 
-    print( "pfile: %s/packages/%s/package.py" % (rd, name))
+    tty.debug( "recipe: %s/packages/%s/package.py" % (rd, name))
     if os.path.exists( "%s/packages/%s/package.py.save" % (rd, name)):
-        print("restoring recipe")
+        tty.info("restoring recipe")
         os.rename( 
              "%s/packages/%s/package.py.save" % (rd, name),
              "%s/packages/%s/package.py" % (rd, name),

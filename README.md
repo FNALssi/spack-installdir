@@ -1,6 +1,6 @@
 
 
-## Spack-subspack
+## Spack-installdir
 
 a [Spack extension](https://spack.readthedocs.io/en/latest/extensions.html#custom-extensions) to install a directory full of files as a spack pagckage.
 

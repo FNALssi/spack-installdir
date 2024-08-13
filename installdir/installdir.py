@@ -9,6 +9,10 @@ import spack.spec
 import spack.store
 import spack.hooks
 import spack.hooks.module_file_generation
+import spack.environment as ev
+from llnl.util import lang, tty
+from spack.cmd.install import install_with_active_env, install_without_active_env
+
 
 
 def get_tuple():
@@ -45,6 +49,16 @@ def make_repo_if_needed( name ):
     run_command("spack repo add --scope=site %s" % rd)
     return rd
 
+def UPPER(name):
+    return name.upper().replace("-","_")
+
+def CamelCase(name):
+    name = name[0].upper() + name[1:]
+    pos = name.find("-")
+    while pos != -1:
+       name = name[:pos] + name[pos+1].upper() + name[pos+2:]
+       pos = name.find("-")
+    return name
 
 def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
 
@@ -59,42 +73,40 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
              "%s/packages/%s/package.py" % (rd, name),
              "%s/packages/%s/package.py.save" % (rd, name),
         )
+    else:
+        os.makedirs( f"{rd}/packages/{name}", exist_ok=True )
 
-    f = os.popen("unset VISUAL; EDITOR=/bin/ed spack create -N %s --template generic --name %s > /dev/null 2>&1" % (namespace, name), "w")
-    dict = {
-       'name': name, 
-       'NAME': name.upper().replace('-','_'), 
-       'version': version,
-       'tarfile': tarfile,
-       'PATHVAR' : pathvar
-    }
-    f.write("""
-g/FIXME:/d
-/^class/a
-    '''declare-simple %(name)s locally declared bundle of files you do not really build'''
-.
-/homepage *=/s;=.*;= 'https://nowhere.org/nosuch/';
-/url *=/s;=.*;= 'file://%(tarfile)s'
-/url *=/+2,\$d
-a
 
-    version('%(version)s')
+    with open( f"{rd}/packages/{name}/package.py", "w") as rout:
+        rout.write(
+            f"""
+            # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+            # recipe created by spack-installdir
+            # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
-    def url_for_version(self,version):
-        url = 'file:///tmp/%(name)s.v{0}.tgz'
-        return url.format(version)
+            from spack.package import *
 
-    def install(self, spec, prefix):
-        install_tree(self.stage.source_path, prefix)
+            class {CamelCase(name)} (Package):
+                '''{name} -- locally declared bundle of files'''
 
-    def setup_run_environment(self, run_env):
-        run_env.set('%(NAME)s_DIR', self.prefix)
-        run_env.prepend_path('%(PATHVAR)s', self.prefix)
-.
-.+1,$d
-wq
-""" % dict)
-    f.close()
+                homepage = 'https://nowhere.org/nosuch/'
+                url = 'file:///tmp/{name}.v{version}.tgz'
+
+                version('{version}')
+
+                def url_for_version(self,version):
+                    url = 'file:///tmp/fermi-spack-tools.v{{0}}.tgz'
+                    return url.format(version)
+
+
+                def install(self, spec, prefix):
+                    install_tree(self.stage.source_path, prefix)
+
+                def setup_run_environment(self, run_env):
+                    run_env.set('{UPPER(name)}_DIR', self.prefix)
+
+            """.replace("\n"+" "*12, "\n")
+        )
 
 def make_tarfile(directory, name,version):
     if directory:
@@ -124,5 +136,29 @@ def install_directory(args):
     name, version = args.spec.replace("=","").split("@")
     tfn = make_tarfile(args.directory,name,version)
     make_recipe(args.namespace, name, version, tfn,  'PATH')
-    os.system("spack install --no-checksum %s@%s" % (name, version))
+    # ===
+    # was: os.system("spack install --no-checksum %s@%s" % (name, version))
+    # now: 
+    #
+    spack.config.set("config:checksum", False, scope="command_line")
+    env = ev.active_environment()
+    args.specs = [f"{name}@={version}"]
+    args.test = False
+    args.no_cache = True
+    args.no_check_sigature = True
+    args.no_checksum = True
+    args.use_buildcache = "never"
+    args.specfiles = []
+    args.overwrite = False
+
+    def reporter_factory(*args):
+        return lang.nullcontext()
+
+    if env:
+        install_with_active_env(env, args, {}, reporter_factory)
+    else:
+        install_without_active_env(args, {}, reporter_factory)
+    #
+    #===
+
     restore_recipe(args.namespace, name)

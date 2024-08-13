@@ -1,11 +1,9 @@
 import sys
 import spack.config
-from spack.extensions import installdir as sext
+from spack.extensions import installdir as idir
 
 
 def setup_parser(subparser):
-
-    scopes = spack.config.scopes()
 
     subparser.add_argument(
         "--directory",
@@ -25,4 +23,4 @@ def setup_parser(subparser):
     
 def installdir(parser, args):
     #print("parser is " + repr(parser) + "args: " + repr(args))
-    sext.install_directory(args)
+    idir.install_directory(args)

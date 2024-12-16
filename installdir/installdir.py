@@ -95,7 +95,7 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
                 version('{version}')
 
                 def url_for_version(self,version):
-                    url = 'file:///tmp/fermi-spack-tools.v{{0}}.tgz'
+                    url = 'file:///tmp/{name}.v{{0}}.tgz'
                     return url.format(version)
 
 

@@ -1,4 +1,3 @@
-
 import os
 import sys
 import json
@@ -14,12 +13,11 @@ from llnl.util import lang, tty
 from spack.cmd.install import install_with_active_env, install_without_active_env
 
 
-
 def get_tuple():
     host_platform = spack.platforms.host()
-    host_os = host_platform.operating_system('default_os')
-    host_target = host_platform.target('default_target')
-    generic_target = host_platform.target('fe').microarchitecture.generic.name
+    host_os = host_platform.operating_system("default_os")
+    host_target = host_platform.target("default_target")
+    generic_target = host_platform.target("fe").microarchitecture.generic.name
     return (str(host_platform), str(host_os), str(generic_target))
 
 
@@ -36,48 +34,50 @@ def get_compiler():
     return comp.strip()
 
 
-def make_repo_if_needed( name ):
-    f = os.popen("spack repo list","r")
+def make_repo_if_needed(name):
+    f = os.popen("spack repo list", "r")
     for line in f:
-        if line.find(name+" ") == 0:
-             f.close()
-             rd = line[line.rfind(" "):].strip()
-             return rd
+        if line.find(name + " ") == 0:
+            f.close()
+            rd = line[line.rfind(" ") :].strip()
+            return rd
     f.close()
-    rd="%s/var/spack/repos/%s" % (os.environ["SPACK_ROOT"], name)
+    rd = "%s/var/spack/repos/%s" % (os.environ["SPACK_ROOT"], name)
     run_command("spack repo create %s %s" % (rd, name))
     run_command("spack repo add --scope=site %s" % rd)
     return rd
 
+
 def UPPER(name):
-    return name.upper().replace("-","_")
+    return name.upper().replace("-", "_")
+
 
 def CamelCase(name):
     name = name[0].upper() + name[1:]
     pos = name.find("-")
     while pos != -1:
-       name = name[:pos] + name[pos+1].upper() + name[pos+2:]
-       pos = name.find("-")
+        name = name[:pos] + name[pos + 1].upper() + name[pos + 2 :]
+        pos = name.find("-")
     return name
 
-def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
+
+def make_recipe(namespace, name, version, tarfile, pathvar="IGNORE"):
 
     rd = make_repo_if_needed(namespace)
 
     # rewrite recipe if present with new tarfile...
 
-    tty.debug( "recipe: %s/packages/%s/package.py" % (rd, name))
-    if os.path.exists( "%s/packages/%s/package.py" % (rd, name)):
+    tty.debug("recipe: %s/packages/%s/package.py" % (rd, name))
+    if os.path.exists("%s/packages/%s/package.py" % (rd, name)):
         tty.info("saving recipe")
-        os.rename( 
-             "%s/packages/%s/package.py" % (rd, name),
-             "%s/packages/%s/package.py.save" % (rd, name),
+        os.rename(
+            "%s/packages/%s/package.py" % (rd, name),
+            "%s/packages/%s/package.py.save" % (rd, name),
         )
     else:
-        os.makedirs( f"{rd}/packages/{name}", exist_ok=True )
+        os.makedirs(f"{rd}/packages/{name}", exist_ok=True)
 
-
-    with open( f"{rd}/packages/{name}/package.py", "w") as rout:
+    with open(f"{rd}/packages/{name}/package.py", "w") as rout:
         rout.write(
             f"""
             # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -105,60 +105,53 @@ def make_recipe( namespace, name, version, tarfile,  pathvar='IGNORE'):
                 def setup_run_environment(self, run_env):
                     run_env.set('{UPPER(name)}_DIR', self.prefix)
 
-            """.replace("\n"+" "*12, "\n")
+            """.replace(
+                "\n" + " " * 12, "\n"
+            )
         )
 
-def make_tarfile(directory, name,version):
+
+def make_tarfile(directory, name, version):
     if directory:
-       directory = f"cd {directory} &&"
+        directory = f"cd {directory} &&"
     else:
-       directory = ""
+        directory = ""
     tfn = "/tmp/%s.v%s.tgz" % (name, version)
     os.system(f"{directory} tar czvf %s ." % tfn)
     return tfn
 
-    
-def restore_recipe( namespace, name ):
+
+def restore_recipe(namespace, name):
 
     rd = make_repo_if_needed(namespace)
 
     # restore recipe if present with new tarfile...
 
-    tty.debug( "recipe: %s/packages/%s/package.py" % (rd, name))
-    if os.path.exists( "%s/packages/%s/package.py.save" % (rd, name)):
+    tty.debug("recipe: %s/packages/%s/package.py" % (rd, name))
+    if os.path.exists("%s/packages/%s/package.py.save" % (rd, name)):
         tty.info("restoring recipe")
-        os.rename( 
-             "%s/packages/%s/package.py.save" % (rd, name),
-             "%s/packages/%s/package.py" % (rd, name),
+        os.rename(
+            "%s/packages/%s/package.py.save" % (rd, name),
+            "%s/packages/%s/package.py" % (rd, name),
         )
 
+
 def install_directory(args):
-    name, version = args.spec.replace("=","").split("@")
-    tfn = make_tarfile(args.directory,name,version)
-    make_recipe(args.namespace, name, version, tfn,  'PATH')
+    name, version = args.spec.replace("=", "").split("@")
+    tfn = make_tarfile(args.directory, name, version)
+    make_recipe(args.namespace, name, version, tfn, "PATH")
     # ===
     # was: os.system("spack install --no-checksum %s@%s" % (name, version))
-    # now: 
+    # now:
     #
-    spack.config.set("config:checksum", False, scope="command_line")
-    env = ev.active_environment()
-    args.specs = [f"{name}@={version}"]
-    args.test = False
-    args.no_cache = True
-    args.no_check_sigature = True
-    args.no_checksum = True
-    args.use_buildcache = "never"
-    args.specfiles = []
-    args.overwrite = False
+    argv = [
+        "-k",
+        "install",
+        "--no-checksum",
+        "--use-buildcache", "never",
+        f"{name}@={version}",
+    ]
 
-    def reporter_factory(*args):
-        return lang.nullcontext()
-
-    if env:
-        install_with_active_env(env, args, {}, reporter_factory)
-    else:
-        install_without_active_env(args, {}, reporter_factory)
-    #
-    #===
+    spack.main.main(argv)
 
     restore_recipe(args.namespace, name)

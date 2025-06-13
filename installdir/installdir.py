@@ -2,7 +2,7 @@ import os
 import sys
 import json
 
-import ruamel.yaml
+import _vendoring.ruamel.yaml
 import spack.main
 import spack.spec
 import spack.store

@@ -2,16 +2,23 @@ import os
 import sys
 import json
 
-import _vendoring.ruamel.yaml
+from spack import spack_version
 import spack.main
 import spack.spec
 import spack.store
 import spack.hooks
 import spack.hooks.module_file_generation
 import spack.environment as ev
-from llnl.util import lang, tty
-from spack.cmd.install import install_with_active_env, install_without_active_env
+try:
+    import spack.vendor.ruamel.yaml
+except:
+    import _vendoring.ruamel.yaml
+try:
+    from spack.llnl.util import lang, tty
+except:
+    from llnl.util import lang, tty
 
+from spack.cmd.install import install_with_active_env, install_without_active_env
 
 def get_tuple():
     host_platform = spack.platforms.host()
@@ -37,12 +44,15 @@ def get_compiler():
 def make_repo_if_needed(name):
     f = os.popen("spack repo list", "r")
     for line in f:
-        if line.find(name + " ") == 0:
+        if line.find(f"{name} ") >= 0:
             f.close()
             rd = line[line.rfind(" ") :].strip()
             return rd
     f.close()
-    rd = "%s/var/spack/repos/%s" % (os.environ["SPACK_ROOT"], name)
+    if spack_version.find("1.") >= 0:
+        rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}/spack_repo/{name}" 
+    else:
+        rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}"
     run_command("spack repo create %s %s" % (rd, name))
     run_command("spack repo add --scope=site %s" % rd)
     return rd

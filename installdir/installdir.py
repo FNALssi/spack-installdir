@@ -49,7 +49,7 @@ def make_repo_if_needed(name):
             rd = line[line.rfind(" ") :].strip()
             return rd
     f.close()
-    if spack_version.find("1.") >= 0:
+    if spack_version > "1.0":
         rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}/spack_repo/{name}" 
     else:
         rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}"

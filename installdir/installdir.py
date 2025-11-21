@@ -51,14 +51,16 @@ def make_repo_if_needed(name):
     f.close()
     if spack_version > "1.0":
         rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}/spack_repo/{name}" 
+        rdc = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}"
     else:
         rd = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}"
+        rdc = f"{os.environ['SPACK_ROOT']}/var/spack/repos/{name}"
     if spack_version > "1.1":
         scope="spack"
     else:
         scope="site"
     run_command("spack repo create %s %s" % (rd, name))
-    run_command("spack repo add --scope=%s %s" % (scope, rd))
+    run_command("spack repo add --scope=%s %s" % (scope, rdc))
     return rd
 
 

@@ -59,8 +59,8 @@ def make_repo_if_needed(name):
         scope="spack"
     else:
         scope="site"
-    run_command("spack repo create %s %s" % (rd, name))
-    run_command("spack repo add --scope=%s %s" % (scope, rdc))
+    run_command("spack repo create %s %s" % (rdc, name))
+    run_command("spack repo add --scope=%s %s" % (scope, rd))
     return rd
 
 
